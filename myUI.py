@@ -11,7 +11,8 @@ from datetime import datetime
 import os
 from os import path
 import numpy as np
-image_result = cv2.imread("/home/yoona/Pictures/114437066_588098281851846_8163055224235357808_n.jpg")
+sample_image = cv2.imread("/home/yoona/Pictures/114437066_588098281851846_8163055224235357808_n.jpg")
+image_result = [sample_image] * 3
 feature = {
 
     'car1': True,
@@ -501,7 +502,7 @@ class Ui_MainWindow(QWidget):
         self.savePath1 = self.createDir('IP_CAM_1')
         self.startTime1 = str(now.day)+' - '+str(now.hour)+'h'+str(now.minute)+ ' - '
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        self.outVivdeo = cv2.VideoWriter(self.savePath1+'output.avi', fourcc, 30, (int(image_result.shape[1]), int(image_result.shape[0])))
+        self.outVivdeo = cv2.VideoWriter(self.savePath1+'output.avi', fourcc, 30, (int(image_result[0].shape[1]), int(image_result[0].shape[0])))
         self.timer.start(20)
       else:
         self.startCAM1.setEnabled(True)
@@ -511,7 +512,7 @@ class Ui_MainWindow(QWidget):
     def viewCam1(self):
       global image_result
       global center_point
-      image = image_result.copy()
+      image = image_result[0].copy()
       self.outVivdeo.write(image)
       flag_warning=0
       if self.monitorAreaCAM1.isChecked():
@@ -538,7 +539,7 @@ class Ui_MainWindow(QWidget):
         self.savePath2 = self.createDir('IP_CAM_2')
         self.startTime2 = str(now.day)+' - '+str(now.hour)+'h'+str(now.minute)+ ' - '
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        self.outVivdeo2 = cv2.VideoWriter(self.savePath2+'output2.avi', fourcc, 30,(int(image_result.shape[1]), int(image_result.shape[0])))
+        self.outVivdeo2 = cv2.VideoWriter(self.savePath2+'output2.avi', fourcc, 30,(int(image_result[1].shape[1]), int(image_result[1].shape[0])))
         self.timer2.start(20)
       else:
         self.startCAM2.setEnabled(True)
@@ -548,7 +549,7 @@ class Ui_MainWindow(QWidget):
     def viewCam2(self):
       global image_result
       global center_point
-      image = image_result.copy()
+      image = image_result[1].copy()
       self.outVivdeo2.write(image)
       flag_warning = 0
       if self.monitorAreaCAM2.isChecked():
@@ -575,7 +576,7 @@ class Ui_MainWindow(QWidget):
             self.savePath3 = self.createDir('IP_CAM_3')
             self.startTime3 = str(now.day)+' - '+str(now.hour)+'h'+str(now.minute)+ ' - '
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
-            self.outVivdeo3 = cv2.VideoWriter(self.savePath3+'output3.avi', fourcc, 30, (int(image_result.shape[1]), int(image_result.shape[0])))
+            self.outVivdeo3 = cv2.VideoWriter(self.savePath3+'output3.avi', fourcc, 30, (int(image_result[2].shape[1]), int(image_result[2].shape[0])))
             self.timer3.start(20)
         else:
             self.startCAM3.setEnabled(True)
@@ -585,7 +586,7 @@ class Ui_MainWindow(QWidget):
     def viewCam3(self):
       global image_result
       global center_point
-      image = image_result.copy()
+      image = image_result[2].copy()
       self.outVivdeo3.write(image)
       flag_warning = 0
       if self.monitorAreaCAM3.isChecked():
