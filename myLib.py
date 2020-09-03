@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 
 pgie_classes_str= ["Person"]
-
+center_point = []
 def monitorProhibitedArea(points:list, center_point:list):
   '''
   Ham canh bao khi co mot Object nam trong vung canh bao
