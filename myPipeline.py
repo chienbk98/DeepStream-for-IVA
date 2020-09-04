@@ -25,22 +25,20 @@ import myLib
 import myUI
 os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = "dummy"
 
-MAX_DISPLAY_LEN=64
-PGIE_CLASS_ID_VEHICLE = 0
-PGIE_CLASS_ID_BICYCLE = 1
-PGIE_CLASS_ID_PERSON = 2
-PGIE_CLASS_ID_ROADSIGN = 3
 MUXER_OUTPUT_WIDTH=1920
 MUXER_OUTPUT_HEIGHT=1080
 MUXER_BATCH_TIMEOUT_USEC=4000000
-TILED_OUTPUT_WIDTH=1366
-TILED_OUTPUT_HEIGHT=768
+TILED_OUTPUT_WIDTH=1920
+TILED_OUTPUT_HEIGHT=1080
 GST_CAPS_FEATURES_NVMM="memory:NVMM"
 pgie_classes_str= ["Person"]
-object_name = {0: "vehicle", 1: "bicycle", 2: "person", 3: "roadsign"}
+object_name = {0: "person"}
+
+
+file_config_nvinfer = "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/Model_Yolo/config_infer_primary_yoloV3.txt"
+file_config_tracker = 'dstest2_tracker_config.txt'
 
 list_IP = ["rtsp://192.168.1.9:43794"]
-center_point = []
 number_sources = len(list_IP)
 def cb_newpad(decodebin, decoder_src_pad,data):
     print("In cb_newpad\n")
@@ -112,8 +110,10 @@ def my_sink_pad_buffer_probe(pad, info, u_data):
     '''
     Ham lay du lieu tu sink pad cua element Tiler
     '''
-    global center_point
-    myLib.remove_list(center_point)
+    for arr_point in myLib.center_point:
+      myLib.remove_list(arr_point)
+
+    
     gst_buffer = info.get_buffer()
     if not gst_buffer:
         sys.stderr.write("Unable to get GstBuffer")
@@ -139,10 +139,9 @@ def my_sink_pad_buffer_probe(pad, info, u_data):
                 obj_meta = pyds.NvDsObjectMeta.cast(l_obj.data)
             except StopIteration:
                 break
-            frame_image=myLib.draw_bounding_boxes(frame_image,obj_meta,obj_meta.object_id)
+            frame_image=myLib.draw_bounding_boxes(image=frame_image,obj_meta=obj_meta,track_id=obj_meta.object_id,source_id=frame_meta.batch_id)
             print("Frame Number: {}, Num object in frame: {}, Object_name: {}, Object_ID: {}, Confidence {}, Source_ID: {}"
             .format(frame_meta.frame_num ,frame_meta.num_obj_meta, object_name[obj_meta.class_id], obj_meta.object_id, obj_meta.confidence, frame_meta.batch_id))
-
             try:
                 l_obj = l_obj.next
             except StopIteration:
@@ -158,10 +157,16 @@ def my_sink_pad_buffer_probe(pad, info, u_data):
     return Gst.PadProbeReturn.OK
 
 class PipeLine():
-    def __init__(self):
+    def __init__(self, tracking = True, on_screen_display = False):
+        '''
+        tracking: use tracker
+        on_screen_display: su dung element hien thi cua Deepstream
+        '''
         GObject.threads_init()
         Gst.init(None)
         print("Creating Pipeline \n ")
+        self.tracking = tracking
+        self.on_screen_display = on_screen_display
         self.pipeline = Gst.Pipeline()
         self.createElement()
         self.configElements()
@@ -202,29 +207,33 @@ class PipeLine():
         self.nvosd = Gst.ElementFactory.make("nvdsosd", "onscreendisplay")
         if(is_aarch64()):
             print("Creating transform \n ")
-            self.transform=Gst.ElementFactory.make("nvegltransform", "nvegl-transform")
-        # self.transform=Gst.ElementFactory.make("queue", "nvegl-transform")
+            if self.on_screen_display:
+              self.transform=Gst.ElementFactory.make("nvegltransform", "nvegl-transform")
+            else:
+              self.transform=Gst.ElementFactory.make("queue", "nvegl-transform")
         if not self.transform:
             sys.stderr.write(" Unable to create transform \n")
     
-    
-        self.sink = Gst.ElementFactory.make("nveglglessink", "nvvideo-renderer")
-        # self.sink = Gst.ElementFactory.make("fakesink", "nvvideo-renderer")
+        if self.on_screen_display:
+          self.sink = Gst.ElementFactory.make("nveglglessink", "nvvideo-renderer")
+        else:
+          self.sink = Gst.ElementFactory.make("fakesink", "nvvideo-renderer")
         
         if is_live:
             print("Atleast one of the sources is live")
             self.streammux.set_property('live-source', 1)
-        self.tracker = Gst.ElementFactory.make("nvtracker", "tracker")
-        self.pipeline.add(self.tracker)
+        if self.tracking:
+          print("Create Tracker Element")
+          self.tracker = Gst.ElementFactory.make("nvtracker", "tracker")
+          self.pipeline.add(self.tracker)
 
     def configElements(self):
-        self.streammux.set_property('width', 640)
-        self.streammux.set_property('height', 480)
+        self.streammux.set_property('width', MUXER_OUTPUT_WIDTH)
+        self.streammux.set_property('height', MUXER_OUTPUT_HEIGHT)
         self.streammux.set_property('batch-size', number_sources)
-        self.streammux.set_property('batched-push-timeout', 1/30)#4000000)
+        self.streammux.set_property('batched-push-timeout', MUXER_BATCH_TIMEOUT_USEC)#4000000)
 
-        # pgie.set_property('config-file-path', "dstest_imagedata_config.txt")
-        self.pgie.set_property('config-file-path', "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/Model_Yolo/config_infer_primary_yoloV3.txt")
+        self.pgie.set_property('config-file-path', file_config_nvinfer)
 
 
 
@@ -248,29 +257,30 @@ class PipeLine():
             self.nvvidconv1.set_property("nvbuf-memory-type", mem_type)
             self.tiler.set_property("nvbuf-memory-type", mem_type)
 
-        config = configparser.ConfigParser()
-        config.read('dstest2_tracker_config.txt')
-        config.sections()
+        if self.tracking:
+          config = configparser.ConfigParser()
+          config.read(file_config_tracker)
+          config.sections()
 
-        for key in config['tracker']:
-            if key == 'tracker-width' :
-                tracker_width = config.getint('tracker', key)
-                self.tracker.set_property('tracker-width', tracker_width)
-            if key == 'tracker-height' :
-                tracker_height = config.getint('tracker', key)
-                self.tracker.set_property('tracker-height', tracker_height)
-            if key == 'gpu-id' :
-                tracker_gpu_id = config.getint('tracker', key)
-                self.tracker.set_property('gpu_id', tracker_gpu_id)
-            if key == 'll-lib-file' :
-                tracker_ll_lib_file = config.get('tracker', key)
-                self.tracker.set_property('ll-lib-file', tracker_ll_lib_file)
-            if key == 'll-config-file' :
-                tracker_ll_config_file = config.get('tracker', key)
-                self.tracker.set_property('ll-config-file', tracker_ll_config_file)
-            if key == 'enable-batch-process' :
-                tracker_enable_batch_process = config.getint('tracker', key)
-                self.tracker.set_property('enable_batch_process', tracker_enable_batch_process)
+          for key in config['tracker']:
+              if key == 'tracker-width' :
+                  tracker_width = config.getint('tracker', key)
+                  self.tracker.set_property('tracker-width', tracker_width)
+              if key == 'tracker-height' :
+                  tracker_height = config.getint('tracker', key)
+                  self.tracker.set_property('tracker-height', tracker_height)
+              if key == 'gpu-id' :
+                  tracker_gpu_id = config.getint('tracker', key)
+                  self.tracker.set_property('gpu_id', tracker_gpu_id)
+              if key == 'll-lib-file' :
+                  tracker_ll_lib_file = config.get('tracker', key)
+                  self.tracker.set_property('ll-lib-file', tracker_ll_lib_file)
+              if key == 'll-config-file' :
+                  tracker_ll_config_file = config.get('tracker', key)
+                  self.tracker.set_property('ll-config-file', tracker_ll_config_file)
+              if key == 'enable-batch-process' :
+                  tracker_enable_batch_process = config.getint('tracker', key)
+                  self.tracker.set_property('enable_batch_process', tracker_enable_batch_process)
         
     def addingAndLinkingElements(self):
         print("Adding elements to Pipeline \n")
