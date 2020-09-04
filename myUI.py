@@ -5,16 +5,20 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QUrl, QTimer
-import cv2
-import myLib
 from datetime import datetime
-import os
 from os import path
 import numpy as np
+import threading
+import myLib
+from myLib import warningMethod
+import cv2
+import os
+
+
+
 sample_image = cv2.imread("/home/yoona/Pictures/114437066_588098281851846_8163055224235357808_n.jpg")
 image_result = [sample_image] * 3
 feature = {
-
     'car1': True,
     'mpa1': True,
     'person1': True,
@@ -318,8 +322,14 @@ class Ui_MainWindow(QWidget):
         self.monitorAreaCAM1.setVisible(self.feature['mpa1'])
         self.monitorAreaCAM1.toggle()
         self.monitorAreaCAM1.setCheckable(True)
+
         self.monitorAreaCAM2.setVisible(self.feature['mpa2'])
+        self.monitorAreaCAM2.toggle()
+        self.monitorAreaCAM2.setCheckable(True)
+
         self.monitorAreaCAM3.setVisible(self.feature['mpa3'])
+        self.monitorAreaCAM3.toggle()
+        self.monitorAreaCAM3.setCheckable(True)
 
         self.personSearchingCAM1.setVisible(self.feature['person1'])
         self.personSearchingCAM2.setVisible(self.feature['person2'])
@@ -511,12 +521,12 @@ class Ui_MainWindow(QWidget):
         self.CAM1.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM1)))
     def viewCam1(self):
       global image_result
-      global center_point
+      # global center_point
       image = image_result[0].copy()
       self.outVivdeo.write(image)
       flag_warning=0
       if self.monitorAreaCAM1.isChecked():
-          flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM1, center_point=center_point)
+          flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM1, center_point=myLib.center_point, source_id=0)
       self.CAM1.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM1)))
       self.CAM1_draw.setPixmap(QPixmap.fromImage(self.image_to_QImage(self.drawArea(image, self.points_CAM1, self.CAM1_draw, flag_warning), self.CAM1_draw)))
     def stop_view1(self):
@@ -535,12 +545,15 @@ class Ui_MainWindow(QWidget):
       self.startCAM2.setEnabled(False)
       global image_result
       if True:
+        self.check2 = False
+        self.warning2 = None
         now = datetime.now()
         self.savePath2 = self.createDir('IP_CAM_2')
         self.startTime2 = str(now.day)+' - '+str(now.hour)+'h'+str(now.minute)+ ' - '
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         self.outVivdeo2 = cv2.VideoWriter(self.savePath2+'output2.avi', fourcc, 30,(int(image_result[1].shape[1]), int(image_result[1].shape[0])))
         self.timer2.start(20)
+
       else:
         self.startCAM2.setEnabled(True)
         self.stopCAM2.setEnabled(False)
@@ -548,12 +561,30 @@ class Ui_MainWindow(QWidget):
         self.CAM2.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM2)))        
     def viewCam2(self):
       global image_result
-      global center_point
       image = image_result[1].copy()
       self.outVivdeo2.write(image)
       flag_warning = 0
       if self.monitorAreaCAM2.isChecked():
-          flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM2, center_point=center_point)
+          flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM2, center_point=myLib.center_point, source_id=1)
+          if flag_warning == None and self.check2 == False:
+            pass
+          elif flag_warning == 1 and self.check2 == False:
+            print("warning 1")
+            self.check2 = True
+            self.warning2 = warningMethod(camera_idx=2)
+            self.t2 = threading.Thread(target=self.warning2.run, args=())
+            self.t2.start()
+          elif self.check2 == True and flag_warning == None:
+            print("terminate")
+            self.warning2.terminate()
+            self.t2.join()
+            self.check2 = False
+      else:
+        if self.warning2 is not None:
+          self.warning2.terminate()
+          self.check2 = False
+
+
       self.CAM2.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM2)))
       self.CAM2_draw.setPixmap(QPixmap.fromImage(self.image_to_QImage(self.drawArea(image, self.points_CAM2, self.CAM2_draw, flag_warning), self.CAM2_draw)))    
     def stop_view2(self):
@@ -566,6 +597,9 @@ class Ui_MainWindow(QWidget):
       now = datetime.now()
       fileName = self.startTime2+str(now.hour)+'h'+str(now.minute)+'.avi'
       os.rename(self.savePath2+'output2.avi', self.savePath2+fileName)
+      if self.warning2 is not None:
+        self.warning2.terminate()
+        self.check2 = False
 
     def start_view3(self):
         self.stopCAM3.setEnabled(True)
@@ -585,12 +619,11 @@ class Ui_MainWindow(QWidget):
             self.CAM3.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM3)))           
     def viewCam3(self):
       global image_result
-      global center_point
       image = image_result[2].copy()
       self.outVivdeo3.write(image)
       flag_warning = 0
       if self.monitorAreaCAM3.isChecked():
-          flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM3, center_point=center_point)
+          flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM3, center_point=myLib.center_point, source_id=2)
       self.CAM3.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM3)))
       self.CAM3_draw.setPixmap(QPixmap.fromImage(self.image_to_QImage(self.drawArea(image, self.points_CAM3, self.CAM3_draw, flag_warning), self.CAM3_draw)))             
     def stop_view3(self):
