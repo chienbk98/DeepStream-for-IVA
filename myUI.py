@@ -528,19 +528,20 @@ class Ui_MainWindow(QWidget):
       flag_warning=0
       if self.monitorAreaCAM1.isChecked():
           flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM1, center_point=myLib.center_point, source_id=0)
+          if self.warning1 is not None:
+              self.warning1.warning_flag = flag_warning
           if flag_warning == None and self.check1 == False:
             pass
           elif flag_warning == 1 and self.check1 == False:
             print("warning camera 1")
             self.check1 = True
-            self.warning1 = warningMethod(camera_idx=1)
+            self.warning1 = warningMethod(camera_idx=1, warning_flag=flag_warning)
             self.t1 = threading.Thread(target=self.warning1.run, args=())
             self.t1.start()
-          elif self.check1 == True and flag_warning == None:
-            print("terminate 1")
-            self.warning1.terminate()
-            self.t1.join()
-            self.check1 = False
+        #   elif self.check1 == True and flag_warning == None:
+        #     print("terminate 1")
+        #     self.warning1.terminate()
+        #     self.check1 = False
       else:
         if self.warning1 is not None:
           self.warning1.terminate()
@@ -597,7 +598,7 @@ class Ui_MainWindow(QWidget):
           elif self.check2 == True and flag_warning == None:
             print("terminate camera 2")
             self.warning2.terminate()
-            self.t2.join()
+            # self.t2.join()
             self.check2 = False
       else:
         if self.warning2 is not None:
@@ -657,7 +658,7 @@ class Ui_MainWindow(QWidget):
           elif self.check3 == True and flag_warning == None:
             print("terminate camera 2")
             self.warning3.terminate()
-            self.t3.join()
+            # self.t3.join()
             self.check3 = False
       else:
         if self.warning3 is not None:
@@ -725,8 +726,8 @@ class Ui_MainWindow(QWidget):
             x = event.pos().x()
             y = event.pos().y()
             print(x, y)
-            x = round((x/self.CAM1_draw.width()), 10)
-            y = round((y/self.CAM1_draw.height()), 10)
+            x = round((x/self.CAM2_draw.width()), 10)
+            y = round((y/self.CAM2_draw.height()), 10)
             self.points_CAM2.append([x, y])
             print("Position clicked is ({}, {})".format(int(x*self.CAM2_draw.width()), int(y*self.CAM2_draw.height())))
 
@@ -735,8 +736,8 @@ class Ui_MainWindow(QWidget):
             x = event.pos().x()
             y = event.pos().y()
             print(x, y)
-            x = round((x/self.CAM1_draw.width()), 10)
-            y = round((y/self.CAM1_draw.height()), 10)
+            x = round((x/self.CAM3_draw.width()), 10)
+            y = round((y/self.CAM3_draw.height()), 10)
             self.points_CAM3.append([x, y])
             print("Position clicked is ({}, {})".format(int(x*self.CAM3_draw.width()), int(y*self.CAM3_draw.height())))
 
