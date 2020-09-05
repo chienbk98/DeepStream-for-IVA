@@ -508,6 +508,8 @@ class Ui_MainWindow(QWidget):
       self.startCAM1.setEnabled(False)
       global image_result
       if True:
+        self.check1 = False
+        self.warning1 = None
         now = datetime.now()
         self.savePath1 = self.createDir('IP_CAM_1')
         self.startTime1 = str(now.day)+' - '+str(now.hour)+'h'+str(now.minute)+ ' - '
@@ -521,12 +523,28 @@ class Ui_MainWindow(QWidget):
         self.CAM1.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM1)))
     def viewCam1(self):
       global image_result
-      # global center_point
       image = image_result[0].copy()
       self.outVivdeo.write(image)
       flag_warning=0
       if self.monitorAreaCAM1.isChecked():
           flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM1, center_point=myLib.center_point, source_id=0)
+          if flag_warning == None and self.check1 == False:
+            pass
+          elif flag_warning == 1 and self.check1 == False:
+            print("warning camera 1")
+            self.check1 = True
+            self.warning1 = warningMethod(camera_idx=1)
+            self.t1 = threading.Thread(target=self.warning1.run, args=())
+            self.t1.start()
+          elif self.check1 == True and flag_warning == None:
+            print("terminate 1")
+            self.warning1.terminate()
+            self.t1.join()
+            self.check1 = False
+      else:
+        if self.warning1 is not None:
+          self.warning1.terminate()
+          self.check1 = False
       self.CAM1.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM1)))
       self.CAM1_draw.setPixmap(QPixmap.fromImage(self.image_to_QImage(self.drawArea(image, self.points_CAM1, self.CAM1_draw, flag_warning), self.CAM1_draw)))
     def stop_view1(self):
@@ -539,6 +557,9 @@ class Ui_MainWindow(QWidget):
       now = datetime.now()
       fileName = self.startTime1+str(now.hour)+'h'+str(now.minute)+'.avi'
       os.rename(self.savePath1+'output.avi', self.savePath1+fileName)
+      if self.warning1 is not None:
+        self.warning1.terminate()
+        self.check1 = False
 
     def start_view2(self):
       self.stopCAM2.setEnabled(True)
@@ -553,7 +574,6 @@ class Ui_MainWindow(QWidget):
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         self.outVivdeo2 = cv2.VideoWriter(self.savePath2+'output2.avi', fourcc, 30,(int(image_result[1].shape[1]), int(image_result[1].shape[0])))
         self.timer2.start(20)
-
       else:
         self.startCAM2.setEnabled(True)
         self.stopCAM2.setEnabled(False)
@@ -569,13 +589,13 @@ class Ui_MainWindow(QWidget):
           if flag_warning == None and self.check2 == False:
             pass
           elif flag_warning == 1 and self.check2 == False:
-            print("warning 1")
+            print("warning camera 2")
             self.check2 = True
             self.warning2 = warningMethod(camera_idx=2)
             self.t2 = threading.Thread(target=self.warning2.run, args=())
             self.t2.start()
           elif self.check2 == True and flag_warning == None:
-            print("terminate")
+            print("terminate camera 2")
             self.warning2.terminate()
             self.t2.join()
             self.check2 = False
@@ -606,6 +626,8 @@ class Ui_MainWindow(QWidget):
         self.startCAM3.setEnabled(False)
         global image_result
         if True:
+            self.check3 = False
+            self.warning3 = None
             now = datetime.now()
             self.savePath3 = self.createDir('IP_CAM_3')
             self.startTime3 = str(now.day)+' - '+str(now.hour)+'h'+str(now.minute)+ ' - '
@@ -624,6 +646,23 @@ class Ui_MainWindow(QWidget):
       flag_warning = 0
       if self.monitorAreaCAM3.isChecked():
           flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM3, center_point=myLib.center_point, source_id=2)
+          if flag_warning == None and self.check3 == False:
+            pass
+          elif flag_warning == 1 and self.check3 == False:
+            print("warning camera 2")
+            self.check3 = True
+            self.warning3 = warningMethod(camera_idx=2)
+            self.t3 = threading.Thread(target=self.warning3.run, args=())
+            self.t3.start()
+          elif self.check3 == True and flag_warning == None:
+            print("terminate camera 2")
+            self.warning3.terminate()
+            self.t3.join()
+            self.check3 = False
+      else:
+        if self.warning3 is not None:
+          self.warning3.terminate()
+          self.check3 = False
       self.CAM3.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM3)))
       self.CAM3_draw.setPixmap(QPixmap.fromImage(self.image_to_QImage(self.drawArea(image, self.points_CAM3, self.CAM3_draw, flag_warning), self.CAM3_draw)))             
     def stop_view3(self):
@@ -635,7 +674,10 @@ class Ui_MainWindow(QWidget):
         self.CAM3.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM3)))
         now = datetime.now()
         fileName = self.startTime3+str(now.hour)+'h'+str(now.minute)+'.avi'
-        os.rename(self.savePath3+'output3.avi', self.savePath3+fileName) 
+        os.rename(self.savePath3+'output3.avi', self.savePath3+fileName)
+        if self.warning3 is not None:
+          self.warning3.terminate()
+          self.check3 = False
         
     def createDir(self, IP_CAM_Number: str):
         now = datetime.now()
