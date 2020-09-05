@@ -543,7 +543,10 @@ class Ui_MainWindow(QWidget):
         #     self.warning1.terminate()
         #     self.check1 = False
       else:
+        # print("khong an nut")
+        print(self.warning1)
         if self.warning1 is not None:
+          print("delete Thread")
           self.warning1.terminate()
           self.check1 = False
       self.CAM1.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM1)))

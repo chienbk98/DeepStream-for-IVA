@@ -4,7 +4,7 @@ import cv2
 import threading
 from playsound import playsound
 import time
-import pyttsx3
+# import pyttsx3
 
 
 
@@ -14,24 +14,28 @@ cap_width = 1920
 cap_height = 1080
 
 class warningMethod():
-  def __init__(self, camera_idx):
-    # super().__init__()
+  def __init__(self, camera_idx, warning_flag):
     self.running_flag = True
     self.camera_idx = camera_idx
+    self.warning_flag = warning_flag
   
   def terminate(self):
     self.running_flag = False
   def run(self):
-    # e = pyttsx3.init()
     while self.running_flag:
-      # e.say("Camera {} Someones are entering the restricted area".format(self.camera_idx))
-      # e.runAndWait()
-      playsound('warning.mp3')
-      time.sleep(1)
+      while self.warning_flag and self.running_flag:
+        playsound('warning.mp3')
+        print("Co doi tuong di vao vung cam")
+        time.sleep(2)
+      else:
+        print("Waiting !")
+        break
+        pass
     else:
       print("Warning ends")
 
 def monitorProhibitedArea(points:list, center_point:list, source_id:int):
+  # print("center_point", center_point)
   '''
   Ham canh bao khi co mot Object nam trong vung canh bao
   '''
@@ -40,7 +44,7 @@ def monitorProhibitedArea(points:list, center_point:list, source_id:int):
     x = point[0] * cap_width
     y = point[1] * cap_height
     point1.append((int(x), int(y))) # diem vung cam sau khi chuyen tuong ung voi kich thuoc cua frame hien tai
-
+  # print("point area :", point1)
   for va in center_point[source_id]:
     x_center, y_center = va[0], va[1]
     if len(point1) > 2:

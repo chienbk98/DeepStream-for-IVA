@@ -140,8 +140,8 @@ def my_sink_pad_buffer_probe(pad, info, u_data):
             except StopIteration:
                 break
             frame_image=myLib.draw_bounding_boxes(image=frame_image,obj_meta=obj_meta,track_id=obj_meta.object_id,source_id=frame_meta.batch_id)
-            print("Frame Number: {}, Num object in frame: {}, Object_name: {}, Object_ID: {}, Confidence {}, Source_ID: {}"
-            .format(frame_meta.frame_num ,frame_meta.num_obj_meta, object_name[obj_meta.class_id], obj_meta.object_id, obj_meta.confidence, frame_meta.batch_id))
+            # print("Frame Number: {}, Num object in frame: {}, Object_name: {}, Object_ID: {}, Confidence {}, Source_ID: {}"
+            # .format(frame_meta.frame_num ,frame_meta.num_obj_meta, object_name[obj_meta.class_id], obj_meta.object_id, obj_meta.confidence, frame_meta.batch_id))
             try:
                 l_obj = l_obj.next
             except StopIteration:
@@ -295,9 +295,12 @@ class PipeLine():
         self.pipeline.add(self.sink)
 
         print("Linking elements in the Pipeline \n")
-        self.streammux.link(self.pgie)    
-        self.pgie.link(self.tracker)
-        self.tracker.link(self.nvvidconv1)
+        self.streammux.link(self.pgie)
+        if self.tracking: 
+            self.pgie.link(self.tracker)
+            self.tracker.link(self.nvvidconv1)
+        else:
+            self.pgie.link(self.nvvidconv1)
         self.nvvidconv1.link(self.filter1)
         self.filter1.link(self.tiler)
         self.tiler.link(self.nvvidconv)
