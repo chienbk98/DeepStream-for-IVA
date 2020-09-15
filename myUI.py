@@ -19,20 +19,20 @@ import os
 sample_image = cv2.imread("/home/yoona/Pictures/114437066_588098281851846_8163055224235357808_n.jpg")
 image_result = [sample_image] * 3
 feature = {
-    'car1': True,
+    'car1': False,
     'mpa1': True,
     'person1': True,
-    'illegal1': True,
+    'illegal1': False,
 
-    'car2': True,
+    'car2': False,
     'mpa2': True,
     'person2': True,
-    'illegal2': True,   
+    'illegal2': False,   
 
-    'car3': True,
+    'car3': False,
     'mpa3': True,
     'person3': True,
-    'illegal3': True
+    'illegal3': False
 }
 MONTH = { 1:'January',
           2:'February',
@@ -74,7 +74,7 @@ class Ui_MainWindow(QWidget):
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.CAM1 = QtWidgets.QLabel(self.tab)
         self.CAM1.setMinimumSize(QtCore.QSize(320, 240))
-        self.CAM1.setMaximumSize(QtCore.QSize(426, 400))
+        self.CAM1.setMaximumSize(QtCore.QSize(586, 400))
         self.CAM1.setFrameShape(QtWidgets.QFrame.Box)
         self.CAM1.setObjectName("CAM1")
         self.verticalLayout_3.addWidget(self.CAM1)
@@ -112,7 +112,7 @@ class Ui_MainWindow(QWidget):
  # View CAM 2
         self.CAM2 = QtWidgets.QLabel(self.tab)
         self.CAM2.setMinimumSize(QtCore.QSize(320, 240))
-        self.CAM2.setMaximumSize(QtCore.QSize(426, 400))
+        self.CAM2.setMaximumSize(QtCore.QSize(586, 400))
         self.CAM2.setFrameShape(QtWidgets.QFrame.Box)
         self.CAM2.setObjectName("CAM2")
         self.verticalLayout.addWidget(self.CAM2)
@@ -150,7 +150,7 @@ class Ui_MainWindow(QWidget):
  # View CAM 3
         self.CAM3 = QtWidgets.QLabel(self.tab)
         self.CAM3.setMinimumSize(QtCore.QSize(320, 240))
-        self.CAM3.setMaximumSize(QtCore.QSize(426, 400))
+        self.CAM3.setMaximumSize(QtCore.QSize(586, 400))
         self.CAM3.setFrameShape(QtWidgets.QFrame.Box)
         self.CAM3.setObjectName("CAM3")
         self.verticalLayout_2.addWidget(self.CAM3)
@@ -243,7 +243,7 @@ class Ui_MainWindow(QWidget):
         self.verticalLayout_5.setObjectName("verticalLayout_5")
         self.CAM1_draw = QtWidgets.QLabel(self.tab_3)
         self.CAM1_draw.setMinimumSize(QtCore.QSize(320, 240))
-        self.CAM1_draw.setMaximumSize(QtCore.QSize(426, 400))
+        self.CAM1_draw.setMaximumSize(QtCore.QSize(586, 400))
         self.CAM1_draw.setFrameShape(QtWidgets.QFrame.Box)
         self.CAM1_draw.setObjectName("CAM1_draw")
         self.verticalLayout_5.addWidget(self.CAM1_draw)
@@ -265,7 +265,7 @@ class Ui_MainWindow(QWidget):
  # Setting CAM 2
         self.CAM2_draw = QtWidgets.QLabel(self.tab_3)
         self.CAM2_draw.setMinimumSize(QtCore.QSize(320, 240))
-        self.CAM2_draw.setMaximumSize(QtCore.QSize(426, 400))
+        self.CAM2_draw.setMaximumSize(QtCore.QSize(586, 400))
         self.CAM2_draw.setFrameShape(QtWidgets.QFrame.Box)
         self.CAM2_draw.setObjectName("CAM2_draw")
         self.verticalLayout_6.addWidget(self.CAM2_draw)
@@ -287,7 +287,7 @@ class Ui_MainWindow(QWidget):
  # Setting CAM 3 
         self.CAM3_draw = QtWidgets.QLabel(self.tab_3)
         self.CAM3_draw.setMinimumSize(QtCore.QSize(320, 240))
-        self.CAM3_draw.setMaximumSize(QtCore.QSize(426, 400))
+        self.CAM3_draw.setMaximumSize(QtCore.QSize(586, 400))
         self.CAM3_draw.setFrameShape(QtWidgets.QFrame.Box)
         self.CAM3_draw.setObjectName("CAM3_draw")
         self.verticalLayout_7.addWidget(self.CAM3_draw)
@@ -508,8 +508,8 @@ class Ui_MainWindow(QWidget):
       self.startCAM1.setEnabled(False)
       global image_result
       if True:
-        self.check1 = False
-        self.warning1 = None
+        self.check1 = False # tham so dung de khoi tao luong va kiem soat luong canh bao
+        self.warning1 = None # tham so dai dien cho Thread danh cho warning
         now = datetime.now()
         self.savePath1 = self.createDir('IP_CAM_1')
         self.startTime1 = str(now.day)+' - '+str(now.hour)+'h'+str(now.minute)+ ' - '
@@ -522,14 +522,15 @@ class Ui_MainWindow(QWidget):
         image = cv2.imread('no-connection.jpg')
         self.CAM1.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM1)))
     def viewCam1(self):
+      print("number current thread :{}".format(threading.active_count()))
       global image_result
       image = image_result[0].copy()
       self.outVivdeo.write(image)
       flag_warning=0
       if self.monitorAreaCAM1.isChecked():
           flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM1, center_point=myLib.center_point, source_id=0)
-          if self.warning1 is not None:
-              self.warning1.warning_flag = flag_warning
+          if self.warning1 is not None: # Kiem tra xem da co luong canh bao ton tai hay chua
+              self.warning1.warning_flag = flag_warning # neu luong canh bao da ton tai thi gan co canh bao bang flag_warning lay tu ham canh bao.
           if flag_warning == None and self.check1 == False:
             pass
           elif flag_warning == 1 and self.check1 == False:
@@ -543,11 +544,11 @@ class Ui_MainWindow(QWidget):
         #     self.warning1.terminate()
         #     self.check1 = False
       else:
-        # print("khong an nut")
-        print(self.warning1)
         if self.warning1 is not None:
-          print("delete Thread")
           self.warning1.terminate()
+          del self.warning1
+          self.warning1 = None
+          print("delete Thread Warning Camera 3")
           self.check1 = False
       self.CAM1.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM1)))
       self.CAM1_draw.setPixmap(QPixmap.fromImage(self.image_to_QImage(self.drawArea(image, self.points_CAM1, self.CAM1_draw, flag_warning), self.CAM1_draw)))
@@ -570,8 +571,8 @@ class Ui_MainWindow(QWidget):
       self.startCAM2.setEnabled(False)
       global image_result
       if True:
-        self.check2 = False
-        self.warning2 = None
+        self.check2 = False # tham so dung de khoi tao va kiem soat luong canh bao
+        self.warning2 = None # Tham so dai dien cho Thread danh cho warning
         now = datetime.now()
         self.savePath2 = self.createDir('IP_CAM_2')
         self.startTime2 = str(now.day)+' - '+str(now.hour)+'h'+str(now.minute)+ ' - '
@@ -590,25 +591,28 @@ class Ui_MainWindow(QWidget):
       flag_warning = 0
       if self.monitorAreaCAM2.isChecked():
           flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM2, center_point=myLib.center_point, source_id=1)
+          if self.warning2 is not None:
+              self.warning2.warning_flag = flag_warning
           if flag_warning == None and self.check2 == False:
             pass
           elif flag_warning == 1 and self.check2 == False:
             print("warning camera 2")
             self.check2 = True
-            self.warning2 = warningMethod(camera_idx=2)
+            self.warning2 = warningMethod(camera_idx=2, warning_flag=flag_warning)
             self.t2 = threading.Thread(target=self.warning2.run, args=())
             self.t2.start()
-          elif self.check2 == True and flag_warning == None:
-            print("terminate camera 2")
-            self.warning2.terminate()
-            # self.t2.join()
-            self.check2 = False
+        #   elif self.check2 == True and flag_warning == None:
+        #     print("terminate camera 2")
+        #     self.warning2.terminate()
+        #     # self.t2.join()
+        #     self.check2 = False
       else:
         if self.warning2 is not None:
           self.warning2.terminate()
+          del self.warning2
+          self.warning2 = None
+          print("delete Thread Warning Camera 2")
           self.check2 = False
-
-
       self.CAM2.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM2)))
       self.CAM2_draw.setPixmap(QPixmap.fromImage(self.image_to_QImage(self.drawArea(image, self.points_CAM2, self.CAM2_draw, flag_warning), self.CAM2_draw)))    
     def stop_view2(self):
@@ -638,11 +642,11 @@ class Ui_MainWindow(QWidget):
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
             self.outVivdeo3 = cv2.VideoWriter(self.savePath3+'output3.avi', fourcc, 30, (int(image_result[2].shape[1]), int(image_result[2].shape[0])))
             self.timer3.start(20)
-        else:
-            self.startCAM3.setEnabled(True)
-            self.stopCAM3.setEnabled(False)
-            image = cv2.imread('no-connection.jpg')
-            self.CAM3.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM3)))           
+        # else:
+        #     self.startCAM3.setEnabled(True)
+        #     self.stopCAM3.setEnabled(False)
+        #     image = cv2.imread('no-connection.jpg')
+        #     self.CAM3.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM3)))           
     def viewCam3(self):
       global image_result
       image = image_result[2].copy()
@@ -650,22 +654,27 @@ class Ui_MainWindow(QWidget):
       flag_warning = 0
       if self.monitorAreaCAM3.isChecked():
           flag_warning = myLib.monitorProhibitedArea(points=self.points_CAM3, center_point=myLib.center_point, source_id=2)
+          if self.warning3 is not None:
+              self.warning3.warning_flag = flag_waring
           if flag_warning == None and self.check3 == False:
             pass
           elif flag_warning == 1 and self.check3 == False:
             print("warning camera 2")
             self.check3 = True
-            self.warning3 = warningMethod(camera_idx=2)
+            self.warning3 = warningMethod(camera_idx=2, warning_flag=flag_waring)
             self.t3 = threading.Thread(target=self.warning3.run, args=())
             self.t3.start()
-          elif self.check3 == True and flag_warning == None:
-            print("terminate camera 2")
-            self.warning3.terminate()
-            # self.t3.join()
-            self.check3 = False
+        #   elif self.check3 == True and flag_warning == None:
+        #     print("terminate camera 2")
+        #     self.warning3.terminate()
+        #     # self.t3.join()
+        #     self.check3 = False
       else:
         if self.warning3 is not None:
           self.warning3.terminate()
+          del self.warning3
+          self.warning3 = None
+          print("Delete Thread Warning Camera 3")
           self.check3 = False
       self.CAM3.setPixmap(QPixmap.fromImage(self.image_to_QImage(image, self.CAM3)))
       self.CAM3_draw.setPixmap(QPixmap.fromImage(self.image_to_QImage(self.drawArea(image, self.points_CAM3, self.CAM3_draw, flag_warning), self.CAM3_draw)))             
