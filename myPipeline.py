@@ -23,11 +23,10 @@ from datetime import datetime
 
 import myLib
 import myUI
-os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = "dummy"
-
+fps_streams={}
 MUXER_OUTPUT_WIDTH=1920
 MUXER_OUTPUT_HEIGHT=1080
-MUXER_BATCH_TIMEOUT_USEC=4000000
+MUXER_BATCH_TIMEOUT_USEC= (1/30) * 1000
 TILED_OUTPUT_WIDTH=1920
 TILED_OUTPUT_HEIGHT=1080
 GST_CAPS_FEATURES_NVMM="memory:NVMM"
@@ -35,10 +34,12 @@ pgie_classes_str= ["Person"]
 object_name = {0: "person"}
 
 
-file_config_nvinfer = "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/Model_Yolo/config_infer_primary_yoloV3.txt"
+# file_config_nvinfer = "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/Model_Yolo/config_infer_primary_yoloV3.txt"
+# file_config_nvinfer = "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/dstest_imagedata_config.txt"
 file_config_tracker = 'dstest2_tracker_config.txt'
+file_config_nvinfer = "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/Model_Yolo/config_infer_primary_yoloV3_tiny.txt"
 
-list_IP = ["rtsp://192.168.1.9:43794"]
+list_IP = ["rtsp://192.168.1.209:43794"]
 number_sources = len(list_IP)
 def cb_newpad(decodebin, decoder_src_pad,data):
     print("In cb_newpad\n")
@@ -129,7 +130,9 @@ def my_sink_pad_buffer_probe(pad, info, u_data):
 
         n_frame = pyds.get_nvds_buf_surface(hash(gst_buffer), frame_meta.batch_id)
         frame_image = np.array(n_frame, copy=True, order='C')
-        frame_image = myLib.rgba2rgb(frame_image)
+        # frame_image = myLib.rgba2rgb(frame_image)
+        # frame_image = frame_image[:, :, 3]
+        frame_image = cv2.cvtColor(frame_image, cv2.COLOR_BGRA2RGB)
 
         # Lay ra GList Object trong frame
         l_obj = frame_meta.obj_meta_list
@@ -148,7 +151,7 @@ def my_sink_pad_buffer_probe(pad, info, u_data):
                 break
 
         myUI.image_result = [frame_image] * 3
-
+        # fps_streams["stream{0}".format(frame_meta.pad_index)].get_fps()
         try:
             l_frame = l_frame.next
         except StopIteration:
@@ -231,12 +234,9 @@ class PipeLine():
         self.streammux.set_property('width', MUXER_OUTPUT_WIDTH)
         self.streammux.set_property('height', MUXER_OUTPUT_HEIGHT)
         self.streammux.set_property('batch-size', number_sources)
-        self.streammux.set_property('batched-push-timeout', MUXER_BATCH_TIMEOUT_USEC)#4000000)
+        self.streammux.set_property('batched-push-timeout', MUXER_BATCH_TIMEOUT_USEC)
 
         self.pgie.set_property('config-file-path', file_config_nvinfer)
-
-
-
 
         pgie_batch_size=self.pgie.get_property("batch-size")
         if(pgie_batch_size != number_sources):
@@ -248,7 +248,7 @@ class PipeLine():
         self.tiler.set_property("columns",tiler_columns)
         self.tiler.set_property("width", TILED_OUTPUT_WIDTH)
         self.tiler.set_property("height", TILED_OUTPUT_HEIGHT)
-
+        self.sink.set_property("sync", 0)
 
         if not is_aarch64():
             mem_type = int(pyds.NVBUF_MEM_CUDA_UNIFIED)
@@ -291,6 +291,7 @@ class PipeLine():
         self.pipeline.add(self.nvvidconv1)
         self.pipeline.add(self.nvosd)
         if is_aarch64():
+            # print("OK aarch64")
             self.pipeline.add(self.transform)
         self.pipeline.add(self.sink)
 
@@ -312,6 +313,8 @@ class PipeLine():
             self.nvosd.link(self.sink)
     
     def getBuffer(self):
+        GObject.threads_init()
+        Gst.init(None)
         self.loop = GObject.MainLoop()
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
@@ -330,17 +333,14 @@ class PipeLine():
 
 
 if __name__ == '__main__':
-    A = PipeLine()
+    A = PipeLine(on_screen_display=True, tracking=False)
     pipeline = A.pipeline
 
     print("Starting pipeline \n")
-    # start play back and listed to events		
     pipeline.set_state(Gst.State.PLAYING)
     try:
         A.loop.run()
     except:
         pass
-
-    # cleanup
     print("Exiting app\n")
     pipeline.set_state(Gst.State.NULL)
