@@ -22,20 +22,24 @@ class warningMethod():
   def terminate(self):
     self.running_flag = False
   def run(self):
-    while self.running_flag:
-      while self.warning_flag and self.running_flag:
-        playsound('warning.mp3')
-        print("Co doi tuong di vao vung cam")
-        time.sleep(2)
+    while True:
+      print("running!")
+      while self.warning_flag:
+          playsound('warning.mp3')
+          # print("Co doi tuong di vao vung cam")
+          time.sleep(2)
+          if not self.running_flag:
+            break
       else:
-        print("Waiting !")
+        pass 
+        # print("Waiting !")
+      if not self.running_flag:
+        # print("Stop thread! ")
         break
-        pass
     else:
       print("Warning ends")
 
 def monitorProhibitedArea(points:list, center_point:list, source_id:int):
-  # print("center_point", center_point)
   '''
   Ham canh bao khi co mot Object nam trong vung canh bao
   '''
