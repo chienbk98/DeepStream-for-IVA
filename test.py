@@ -60,7 +60,6 @@ if __name__ == "__main__":
     ui = Ui_MainWindow()
     ui.setupUi(mainWindow)
     mainWindow.show()
-    # sys.exit(App.exec_())
 
     pp = PipeLine(on_screen_display=False, tracking=True)
     pipeline = pp.pipeline
@@ -70,7 +69,5 @@ if __name__ == "__main__":
         pp.loop.run()
     except:
         pass
-
-    # cleanup
     print("Exiting app\n")
     pipeline.set_state(Gst.State.NULL)
