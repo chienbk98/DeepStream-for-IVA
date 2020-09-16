@@ -1,10 +1,12 @@
+from playsound import playsound
+from twilio.rest import Client
 from datetime import datetime
 import numpy as np
-import cv2
 import threading
-from playsound import playsound
+import pyttsx3
+import smtplib
 import time
-# import pyttsx3
+import cv2
 
 
 
@@ -13,21 +15,89 @@ center_point = [[],[(960, 540)],[]]
 cap_width = 1920
 cap_height = 1080
 
+gmail_user = 'yoonalearning@gmail.com'
+gmail_password = 'yeuyoona98'
+
+sent_from = gmail_user
+to = ['yoonachien@gmail.com']
+# subject = 'Warning Message'
+# body = 'Someone are entering the restricted area'
+
+# message = 'Subject: {}\n\n{}'.format(subject, body)
+
+def sendemail(camera_idx):
+  subject = 'Warning Message'
+  body = 'Someone are entering the restricted area camera number {}'.format(camera_idx)
+  message = 'Subject: {}\n\n{}'.format(subject, body)
+  server = smtplib.SMTP('smtp.gmail.com', 587)
+  server.starttls()
+  server.login(gmail_user, gmail_password)
+  server.sendmail(sent_from, to, message)
+  server.quit()
+
+
+def sendSMS(camera_idx):
+  body = 'Someone are entering the restricted area Camera number {}'.format(camera_idx) 
+  account_sid = 'ACb0f57f89aed94e673c4d2ff094c53ff4'
+  auth_token = 'c6d03596a44f79a8c0977cec20360910'
+  client = Client(account_sid, auth_token)
+  message = client.messages.create(
+                                from_='+16075243663',
+                                body=body,
+                                to='+84812749258'
+                            )
+  print(message.sid)
+
+
+def makeCall():
+  account_sid = 'ACb0f57f89aed94e673c4d2ff094c53ff4'
+  auth_token = 'c6d03596a44f79a8c0977cec20360910'
+  client = Client(account_sid, auth_token)
+  call = client.calls.create(
+                        url='http://demo.twilio.com/docs/voice.xml',
+                        to='+84812749258',
+                        from_='+16075243663'
+                    )
+
+  print(call.sid)
+
+
+def soundWarning():
+  playsound('warning.mp3')
+
+
 class warningMethod():
-  def __init__(self, camera_idx, warning_flag):
+  def __init__(self, camera_idx:int, warning_flag, type_warning:int):
+    '''
+    camera_idx: index of camera
+    warning_flag: 1: warning, None: No Warning
+    type: 1-Sound, 2-Email, 3-SMS, 4-Call
+    '''
     self.running_flag = True
     self.camera_idx = camera_idx
     self.warning_flag = warning_flag
-  
+    self.type_warning = type_warning
   def terminate(self):
     self.running_flag = False
   def run(self):
     while True:
-      print("running!")
+      # print("running!")
       while self.warning_flag:
-          playsound('warning.mp3')
-          # print("Co doi tuong di vao vung cam")
-          time.sleep(2)
+          # playsound('warning.mp3')
+          if self.type_warning == 1:
+            soundWarning()
+            # print("Co doi tuong di vao vung cam")
+            time.sleep(2)
+          elif self.type_warning == 2:
+            sendemail(self.camera_idx)
+            time.sleep(180)
+          elif self.type_warning == 3:
+            sendSMS(self.camera_idx)
+            time.sleep(180)
+          elif self.type_warning == 4:
+            makeCall()
+            time.sleep(180)
+
           if not self.running_flag:
             break
       else:
