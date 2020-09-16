@@ -34,10 +34,10 @@ pgie_classes_str= ["Person"]
 object_name = {0: "person"}
 
 
-# file_config_nvinfer = "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/Model_Yolo/config_infer_primary_yoloV3.txt"
+file_config_nvinfer = "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/Model_Yolo/config_infer_primary_yoloV3.txt"
 # file_config_nvinfer = "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/dstest_imagedata_config.txt"
 file_config_tracker = 'dstest2_tracker_config.txt'
-file_config_nvinfer = "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/Model_Yolo/config_infer_primary_yoloV3_tiny.txt"
+# file_config_nvinfer = "/opt/nvidia/deepstream/deepstream-5.0/sources/python/apps/deepstream-imagedata-multistream/Model_Yolo/config_infer_primary_yoloV3_tiny.txt"
 
 list_IP = ["rtsp://192.168.1.209:43794"]
 number_sources = len(list_IP)
@@ -333,7 +333,7 @@ class PipeLine():
 
 
 if __name__ == '__main__':
-    A = PipeLine(on_screen_display=True, tracking=False)
+    A = PipeLine(on_screen_display=True, tracking=True)
     pipeline = A.pipeline
 
     print("Starting pipeline \n")
