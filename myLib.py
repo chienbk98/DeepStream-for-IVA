@@ -11,7 +11,7 @@ import cv2
 
 
 pgie_classes_str= ["Person"]
-center_point = [[],[(960, 540)],[]]
+center_point = [[],[],[]]
 cap_width = 1920
 cap_height = 1080
 
@@ -20,10 +20,6 @@ gmail_password = 'yeuyoona98'
 
 sent_from = gmail_user
 to = ['yoonachien@gmail.com']
-# subject = 'Warning Message'
-# body = 'Someone are entering the restricted area'
-
-# message = 'Subject: {}\n\n{}'.format(subject, body)
 
 def sendemail(camera_idx):
   subject = 'Warning Message'
@@ -177,7 +173,7 @@ def draw_bounding_boxes(image,obj_meta,track_id,source_id):
     center_point[source_id].append((x_center, y_center))
 
     obj_name=pgie_classes_str[obj_meta.class_id]
-    image=cv2.rectangle(image,(left,top),(left+width,top+height),(0,255,0),2)
+    # image=cv2.rectangle(image,(left,top),(left+width,top+height),(0,255,0),2)
     image=cv2.circle(image, center=(x_center, y_center), radius=0, color = (0, 255, 0), thickness=10)
-    image=cv2.putText(image,obj_name+',ID'+str(track_id),(left-10,top-10),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,255,0),2)
+    # image=cv2.putText(image,obj_name+',ID'+str(track_id),(left-10,top-10),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,255,0),2)
     return image
